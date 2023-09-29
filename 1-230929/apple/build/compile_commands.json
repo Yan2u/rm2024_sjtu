@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/yan2u/Desktop/rm2024_sjtu/1-230927/apple/build",
+  "command": "/usr/bin/g++   -isystem /usr/local/include/opencv4  -g   -std=gnu++17 -o CMakeFiles/apple.dir/main.cpp.o -c /home/yan2u/Desktop/rm2024_sjtu/1-230927/apple/main.cpp",
+  "file": "/home/yan2u/Desktop/rm2024_sjtu/1-230927/apple/main.cpp"
+}
+]
