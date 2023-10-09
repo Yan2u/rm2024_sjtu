@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/yan2u/Desktop/rm2024_sjtu/2-231008/calibrate/build",
+  "command": "/usr/bin/g++   -isystem /usr/local/include/opencv4  -g   -std=gnu++17 -o CMakeFiles/calibrate.dir/main.cpp.o -c /home/yan2u/Desktop/rm2024_sjtu/2-231008/calibrate/main.cpp",
+  "file": "/home/yan2u/Desktop/rm2024_sjtu/2-231008/calibrate/main.cpp"
+}
+]
