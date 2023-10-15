@@ -27,10 +27,10 @@ const int MAX_CAMERA_POS[3] = { 2000, 2000, 2000 };
 const int MAX_CAMERA_EULER_1000[3] = { 6280, 6280, 6280 };
 
 // 动画参数: 总帧数
-const int FRAMES = 150;
+const int FRAMES[2] = { 450, 45 };
 
 // 动画参数: 每秒帧数
-const int FPS = 30;
+const int FPS = 90;
 
 // 同时用来计算动画的线程数
 const int THREADS_COUNT = 12;
@@ -117,9 +117,12 @@ void draw_image() {
     cv::Mat image = cv::Mat::zeros({ IMG_WIDTH, IMG_HEIGHT }, CV_8UC3);
 
     // 计算像素坐标, 并绘制在 image 上
-    for (auto&& point: points) {
-        auto pixel_point = cter.to_pixel_pos(point);
-        int x = pixel_point[0], y = pixel_point[1];
+    static int n = points.size();
+    Eigen::MatrixXd result;
+    cter.to_pixel_pos(points, result);
+
+    for (int i = 0; i < n; ++i) {
+        int x = result(0, i), y = result(1, i);
         if (x > 0 && x < IMG_WIDTH && y > 0 && y < IMG_HEIGHT) {
             cv::circle(image, { x, y }, 1, cv::Scalar(0, 0, 255), 1);
         }
@@ -128,10 +131,11 @@ void draw_image() {
     // 为了调试方便, 把坐标轴也画出来
     for (int i = 0; i < 3; ++i) {
         int len = axis_points[i].size();
+        Eigen::MatrixXd result;
+        cter.to_pixel_pos(axis_points[i], result);
+
         for (int j = 0; j < len; ++j) {
-            auto&& point = axis_points[i][j];
-            auto pixel_point = cter.to_pixel_pos(point);
-            int x = pixel_point[0], y = pixel_point[1];
+            int x = result(0, j), y = result(1, j);
             if (x > 0 && x < IMG_WIDTH && y > 0 && y < IMG_HEIGHT) {
                 cv::circle(image, { x, y }, 1, axis_colors[i], 1);
             }
@@ -227,20 +231,33 @@ void create_trackbars() {
 }
 
 void test_animation() {
-    rm::LinearAnimationInfo st, ed;
-    st.camera_pos = Eigen::Vector3d { 0, 800, 500 };
-    st.camera_euler_1000 = Eigen::Vector3i { 0, 4600, 1570 };
-    st.rand_max = 1000;
+    /*
+    129 738 0 5094 4991 1570 rdmax=100
+    0 1022 461 6280 6280 1570 rdmax=100
+    0 1022 461 6280 6280 1570 rdmax=0
+    */
+    rm::LinearAnimationInfo key1, key2, key3;
+    key1.camera_pos = Eigen::Vector3d { 129, 738, 0 };
+    key1.camera_euler_1000 = Eigen::Vector3i { 5094, 4991, 1570 };
+    key1.rand_max = 1000;
 
-    ed.camera_pos = Eigen::Vector3d { 0, 1008, 500 };
-    ed.camera_euler_1000 = Eigen::Vector3i { 0, 6280, 1570 };
-    ed.rand_max = 0;
+    key2.camera_pos = Eigen::Vector3d { 0, 1022, 400 };
+    key2.camera_euler_1000 = Eigen::Vector3i { 6280, 6280, 1570 };
+    key2.rand_max = 10;
 
-    rm::LinearAnimation la(st, ed, points, { IMG_WIDTH, IMG_HEIGHT }, FRAMES);
+    key3.camera_pos = Eigen::Vector3d { 0, 1022, 461 };
+    key3.camera_euler_1000 = Eigen::Vector3i { 6280, 6280, 1570 };
+    key3.rand_max = 0;
+
+    std::vector<rm::LinearAnimationInfo> infos { key1, key2, key3 };
+    std::vector<int> frames_between(FRAMES, FRAMES + 2);
+
+    rm::LinearAnimation la(infos, frames_between, points, { IMG_WIDTH, IMG_HEIGHT });
 
     std::vector<cv::Mat> frames;
     la.generate_frames(THREADS_COUNT, frames);
-    la.generate_video(frames, FPS, "animation");
+    // la.generate_video(frames, FPS, "animation");
+    la.show_frames(frames, FPS);
 }
 
 int main() {
