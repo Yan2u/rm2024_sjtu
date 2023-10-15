@@ -17,9 +17,13 @@ class LinearAnimation {
 private:
     LinearAnimationInfo start;
     LinearAnimationInfo end;
-    std::vector<Eigen::Vector3d> points;
+    std::vector<LinearAnimationInfo> key_frames;
+    std::vector<int> frames_between_keyframes;
     cv::Size2i image_size;
+    std::vector<Eigen::Vector3d> points;
     int total_frames;
+
+    Eigen::VectorXd random_values;
 
     // 欧拉角转四元数, 顺序 rpy (Z-Y-X)
     static Eigen::Quaterniond euler_to_quad(Eigen::Vector3d euler_angle) {
@@ -65,15 +69,12 @@ private:
 
         Eigen::Vector3d camera_pos_local;
         Eigen::Vector3d camera_euler_local;
-        Eigen::VectorXd v(n);
-
         rm::Converter cter_local;
         cter_local.intrinsics_mat << 400., 0., 190., 0., 0., 400., 160., 0., 0., 0., 1., 0.;
 
         auto&& apply_ai_local = [&](const LinearAnimationInfo& ai) -> void {
-            v = Eigen::VectorXd::Random(n);
             for (int i = 0; i < n; ++i) {
-                points_local[i][2] = (double)ai.rand_max * v[i];
+                points_local[i][2] = (double)ai.rand_max * random_values[i];
             }
             camera_euler_local[0] = (double)ai.camera_euler_1000[0] / 1000.;
             camera_euler_local[1] = (double)ai.camera_euler_1000[1] / 1000.;
@@ -88,10 +89,11 @@ private:
         for (; ptr != ed && rptr != red; ++ptr, ++rptr) {
             apply_ai_local(*ptr);
             *rptr = cv::Mat::zeros(image_size, CV_8UC1);
+            Eigen::MatrixXd result;
+            cter_local.to_pixel_pos(points_local, result);
 
             for (int i = 0; i < n; ++i) {
-                auto&& pixel_point = cter_local.to_pixel_pos(points_local[i]);
-                int x = pixel_point[0], y = pixel_point[1];
+                int x = result(0, i), y = result(1, i);
                 if (x > 0 && x < image_size.width && y > 0 && y < image_size.height) {
                     cv::circle(*rptr, { x, y }, 1, cv::Scalar(255), 1);
                 }
@@ -107,9 +109,17 @@ public:
      * @param frames 用来接收结果的帧数组
      */
     void generate_frames(int thread_count, std::vector<cv::Mat>& frames) {
-        std::vector<LinearAnimationInfo> infos(total_frames + 1);
-        for (int i = 0; i < total_frames + 1; ++i) {
-            infos[i] = info_between(start, end, total_frames, i);
+        std::vector<LinearAnimationInfo> infos {};
+
+        random_values = Eigen::VectorXd::Random(points.size());
+
+        int n = key_frames.size();
+        for (int i = 0; i < n - 1; ++i) {
+            for (int j = 0; j < frames_between_keyframes[i] + 1; ++j) {
+                infos.push_back(
+                    info_between(key_frames[i], key_frames[i + 1], frames_between_keyframes[i], j)
+                );
+            }
         }
 
         auto&& callable = std::bind(
@@ -165,29 +175,17 @@ public:
     }
 
     explicit LinearAnimation(
-        const LinearAnimationInfo& st,
-        const LinearAnimationInfo& ed,
+        const std::vector<LinearAnimationInfo>& key_frames,
+        const std::vector<int>& frames_between_keyfames,
         const std::vector<Eigen::Vector3d>& points,
         cv::Size2i image_size
     ):
-        start(st),
-        end(ed),
+        key_frames(key_frames),
+        frames_between_keyframes(frames_between_keyfames),
         image_size(image_size),
-        points(points),
-        total_frames(90) {}
-
-    LinearAnimation(
-        const LinearAnimationInfo& st,
-        const LinearAnimationInfo& ed,
-        const std::vector<Eigen::Vector3d>& points,
-        cv::Size2i image_size,
-        int total_frames
-    ):
-        start(st),
-        end(ed),
-        image_size(image_size),
-        points(points),
-        total_frames(total_frames) {}
+        points(points) {
+        assert(key_frames.size() > frames_between_keyfames.size());
+    }
 };
 } // namespace rm
 
