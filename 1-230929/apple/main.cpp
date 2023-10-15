@@ -1,15 +1,15 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <filesystem>
 #include <iostream>
 #include <set>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "opencv2/opencv.hpp"
 
 using Contour = std::vector<cv::Point>;
 using ContourArray = std::vector<Contour>;
 
-template<typename TFirst, typename... TRest>
+template <typename TFirst, typename... TRest>
 inline void show_images(TFirst first, TRest... rest) {
     static_assert(std::is_same_v<TFirst, cv::Mat>, "not cv::Mat object");
 
@@ -40,7 +40,7 @@ void task() {
     cv::Mat src = cv::imread("apple.png");
     assert(src.channels() == 3);
 
-    cv::Mat channels[3]; // b, g, r
+    cv::Mat channels[3];  // b, g, r
     cv::split(src, channels);
     channels[1] = channels[2] - channels[1];
 
@@ -53,10 +53,10 @@ void task() {
     cv::Mat bin;
     cv::inRange(hsv, cv::Scalar(6, 100, 100), cv::Scalar(36, 255, 255), bin);
 
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, { 3, 3 });
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, {3, 3});
 
     cv::Mat morph;
-    cv::morphologyEx(bin, morph, cv::MORPH_CLOSE, kernel, { -1, -1 }, 1);
+    cv::morphologyEx(bin, morph, cv::MORPH_CLOSE, kernel, {-1, -1}, 1);
 
     ContourArray contours;
     cv::findContours(morph, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
