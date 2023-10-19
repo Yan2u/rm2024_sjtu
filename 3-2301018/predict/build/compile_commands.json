@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/yan2u/Robomaster/rm2024_sjtu/3-2301018/predict/build",
+  "command": "/usr/bin/g++  -isystem /usr/local/include/opencv4 -g -std=gnu++17 -o CMakeFiles/predict.dir/main.cpp.o -c /home/yan2u/Robomaster/rm2024_sjtu/3-2301018/predict/main.cpp",
+  "file": "/home/yan2u/Robomaster/rm2024_sjtu/3-2301018/predict/main.cpp",
+  "output": "CMakeFiles/predict.dir/main.cpp.o"
+}
+]
